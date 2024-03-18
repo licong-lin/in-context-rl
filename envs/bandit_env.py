@@ -9,7 +9,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 
-def sample(dim, act_num, H, var,  type='uniform'):   ## 1.51 for this, 1.52 for unif-0.5
+def sample(dim, act_num, H, var,  type='uniform'):  
     
     
     if type == 'uniform':
@@ -20,7 +20,7 @@ def sample(dim, act_num, H, var,  type='uniform'):   ## 1.51 for this, 1.52 for 
         raise NotImplementedError
         
         
-    #np.random.seed(17)
+    
     if type=='uniform':
         action_set=np.random.uniform(low=-1,high=1,size=(act_num,dim))
     elif type == 'bernoulli':
@@ -44,7 +44,7 @@ def sample(dim, act_num, H, var,  type='uniform'):   ## 1.51 for this, 1.52 for 
 
 # def sample(dim, act_num, H, var,  type='uniform'):           ##for Thomposon sampling
 #     if type == 'uniform':
-#         means = np.random.normal(loc=0, scale=1, size=(dim,))    ##prior_std=1.     ##1.49 for  +-1/2 (default), 1.48 for abs normal dist and -+1 unif         1.485 for -+2 ;  1.49,1.5 and dim=3 with unif +-1, 1.51 with abs normal
+#         means = np.random.normal(loc=0, scale=1, size=(dim,))    ##prior_std=1.    
        
 #     elif type == 'bernoulli':
 #         means = np.random.beta(1, 1, dim)
