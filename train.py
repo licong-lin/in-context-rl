@@ -6,15 +6,11 @@ import torch
 from torchvision.transforms import transforms
 
 import common_args
-from dataset import Dataset, ImageDataset
-from net import Transformer, ImageTransformer
+from dataset import Dataset
+from net import Transformer
 from utils import (
     build_bandit_data_filename,
     build_bandit_model_filename,
-    build_darkroom_data_filename,
-    build_darkroom_model_filename,
-    build_miniworld_data_filename,
-    build_miniworld_model_filename,
 )
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -107,30 +103,7 @@ if __name__ == '__main__':
         filename = build_bandit_model_filename(env, model_config)
         
      
-    elif env.startswith('darkroom'):
-        state_dim = 2
-        action_dim = 5
-
-        dataset_config.update({'rollin_type': 'uniform'})
-        path_train = build_darkroom_data_filename(
-            env, n_envs, dataset_config, mode=0)
-        path_test = build_darkroom_data_filename(
-            env, n_envs, dataset_config, mode=1)
-
-        filename = build_darkroom_model_filename(env, model_config)
-
-    elif env == 'miniworld':
-        state_dim = 2   # direction vector is 2D
-        action_dim = 4
-
-        dataset_config.update({'rollin_type': 'uniform'})
-        path_train = build_miniworld_data_filename(
-            env, n_envs, dataset_config, mode=0)
-        path_test = build_miniworld_data_filename(
-            env, n_envs, dataset_config, mode=1)
-
-        filename = build_miniworld_model_filename(env, model_config)
-
+    
     else:
         raise NotImplementedError
 
@@ -149,28 +122,19 @@ if __name__ == '__main__':
         'act_type': act_type,
 
     }
-    if env == 'miniworld':
-        config.update({'image_size': 25})
-        model = ImageTransformer(config).to(device)
-    else:
-        model = Transformer(config).to(device)
+   
+    model = Transformer(config).to(device)
 
     params = {
         'batch_size': 128,
         'shuffle': True,
     }
 
-    if env == 'miniworld':
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
-        ])
-        train_dataset = ImageDataset(path_train, config, transform)
-        test_dataset = ImageDataset(path_test, config, transform)
-    else:
-        train_dataset = Dataset(path_train, config)
-        test_dataset = Dataset(path_test, config)
+    
+    train_dataset = Dataset(path_train, config)
+    test_dataset = Dataset(path_test, config)
+
+    
     train_loader = torch.utils.data.DataLoader(train_dataset, **params)
     test_loader = torch.utils.data.DataLoader(test_dataset, **params)
 
