@@ -7,19 +7,16 @@ import torch
 import pdb
 
 import common_args
-from evals import eval_bandit, eval_darkroom
-from net import Transformer, ImageTransformer
+from evals import eval_bandit
+
+from net import Transformer
 from utils import (
     build_bandit_data_filename,
     build_bandit_model_filename,
-    build_darkroom_data_filename,
-    build_darkroom_model_filename,
-    build_miniworld_data_filename,
-    build_miniworld_model_filename,
 )
 import numpy as np
 import scipy
-from envs import darkroom_env, bandit_env
+from envs import bandit_env
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -103,16 +100,7 @@ if __name__ == '__main__':
         filename = build_bandit_model_filename(envname, model_config)
         bandit_type = 'bernoulli'
         
-    elif envname.startswith('darkroom'):
-        state_dim = 2
-        action_dim = 5
-
-        filename = build_darkroom_model_filename(envname, model_config)
-    elif envname == 'miniworld':
-        state_dim = 2
-        action_dim = 4
-
-        filename = build_miniworld_model_filename(envname, model_config)
+    
     else:
         raise NotImplementedError
 
@@ -127,7 +115,7 @@ if __name__ == '__main__':
         eval_trajs = [bandit_env.sample(dim, act_num,horizon, var, type='bernoulli')
                 for _ in range(n_eval)]
     else:
-        raise
+        raise NotImplementedError
     
     
     
@@ -150,11 +138,9 @@ if __name__ == '__main__':
 
     # Load network from saved file.
     # By default, load the final file, otherwise load specified epoch.
-    if envname == 'miniworld':
-        config.update({'image_size': 25})
-        model = ImageTransformer(config).to(device)
-    else:
-        model = Transformer(config).to(device)
+    
+    model = Transformer(config).to(device)
+    
     if epoch < 0:
         model_path = f'models/{filename}.pt'
     else:
@@ -181,20 +167,8 @@ if __name__ == '__main__':
             envname, n_eval, dataset_config, mode=2)
         
         save_filename = f'{filename}_hor{horizon}_test.pkl'
-        
-        
-        
-        
-    elif envname in ['darkroom_heldout', 'darkroom_permuted']:
-        dataset_config.update({'rollin_type': 'uniform'})
-        eval_filepath = build_darkroom_data_filename(
-            envname, n_eval, dataset_config, mode=2)
-        save_filename = f'{filename}_hor{horizon}.pkl'
-    elif envname == 'miniworld':
-        dataset_config.update({'rollin_type': 'uniform'})
-        eval_filepath = build_miniworld_data_filename(
-            envname, n_eval, dataset_config, mode=2)
-        save_filename = f'{filename}_hor{horizon}.pkl'
+
+    
     else:
         raise ValueError(f'Environment {envname} not supported')
 
@@ -212,15 +186,12 @@ if __name__ == '__main__':
 #                 try:
 #                     ii+=1
 
-
-
 #                     loaded_list = pickle.load(f)
 
 
 #                     combined_list.extend(loaded_list)
 #                 except EOFError:
 #                     print('load times:',ii)
-
 
 #                     break
 
@@ -236,16 +207,11 @@ if __name__ == '__main__':
 #                 loaded_list = pickle.load(f)
 
 #                 combined_list.extend(loaded_list)
-                
-        
+                       
 #         eval_trajs=combined_list
         
 #         print(len(eval_trajs))
                 
-                
-
-
-    
 #     with open(eval_filepath, 'rb') as f:   ##previous
 #         eval_trajs = pickle.load(f)
         
@@ -281,7 +247,7 @@ if __name__ == '__main__':
         my_save_path=f"my_plots/envname_{envname}_n_sam_{n_samples}_var_{var}_ctrl_{controller}_dim_{dim}_act_{act_num}_\
                             imit_{imit}_net_{[n_layer,n_head,act_type,n_embd]}_epoch_{epoch}_lr_{lr}.pkl"
         
-        #my_save_path='my_plots/record_6.pkl'
+        
         
         with open(my_save_path, 'wb') as f:
             pickle.dump([all_means,all_means_diff,means,sems ], f)
@@ -298,53 +264,3 @@ if __name__ == '__main__':
         
         
 
-    elif envname in ['darkroom_heldout', 'darkroom_permuted']:
-        config = {
-            'Heps': 40,
-            'horizon': horizon,
-            'H': H,
-            'n_eval': min(20, n_eval),
-            'dim': dim,
-            'permuted': True if envname == 'darkroom_permuted' else False,
-        }
-        eval_darkroom.online(eval_trajs, model, **config)
-        plt.savefig(f'figs/{evals_filename}/online/{save_filename}.png')
-        plt.clf()
-
-        del config['Heps']
-        del config['horizon']
-        config['n_eval'] = n_eval
-        eval_darkroom.offline(eval_trajs, model, **config)
-        plt.savefig(f'figs/{evals_filename}/bar/{save_filename}_bar.png')
-        plt.clf()
-
-    elif envname == 'miniworld':
-        from evals import eval_miniworld
-        save_video = args['save_video']
-        filename_prefix = f'videos/{save_filename}/{evals_filename}/'
-        config = {
-            'Heps': 40,
-            'horizon': horizon,
-            'H': H,
-            'n_eval': min(20, n_eval),
-            'save_video': save_video,
-            'filename_template': filename_prefix + '{controller}_env{env_id}_ep{ep}_online.gif',
-        }
-
-        if save_video and not os.path.exists(f'videos/{save_filename}/{evals_filename}'):
-            os.makedirs(
-                f'videos/{save_filename}/{evals_filename}', exist_ok=True)
-
-        eval_miniworld.online(eval_trajs, model, **config)
-        plt.savefig(f'figs/{evals_filename}/online/{save_filename}.png')
-        plt.clf()
-
-        del config['Heps']
-        del config['horizon']
-        del config['H']
-        config['n_eval'] = n_eval
-        config['filename_template'] = filename_prefix + \
-            '{controller}_env{env_id}_offline.gif'
-        eval_miniworld.offline(eval_trajs, model, **config)
-        plt.savefig(f'figs/{evals_filename}/bar/{save_filename}_bar.png')
-        plt.clf()
