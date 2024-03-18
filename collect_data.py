@@ -27,8 +27,6 @@ from ctrls.ctrl_bandit import (
 )
 from utils import (
     build_bandit_data_filename,
-    build_darkroom_data_filename,
-    build_miniworld_data_filename,
     convert_to_tensor,
 )
 
