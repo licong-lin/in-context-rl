@@ -32,7 +32,7 @@ def deploy_online(env, controller, horizon):
     context_next_states = torch.zeros((1, horizon, env.dx)).float().to(device)
     context_rewards = torch.zeros((1, horizon, 1)).float().to(device)
     
-    context_probs = torch.zeros_like(context_actions)## debug
+    context_probs = torch.zeros_like(context_actions)
     
 
     cum_means = []
