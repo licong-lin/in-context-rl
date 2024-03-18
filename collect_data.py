@@ -8,7 +8,7 @@ import pdb
 
 import gym
 import numpy as np
-from skimage.transform import resize
+
 
 import common_args
 from envs import bandit_env
